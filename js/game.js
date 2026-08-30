@@ -6,10 +6,10 @@ const SAVE_KEY = 'omniverse-tcg-save-v1';
 const REGEN_INTERVAL = 5 * 60 * 1000; // +1 pack stamina / wonder chance every 5 minutes
 const STAMINA_MAX = 2;
 const WONDER_MAX = 2;
-const START_COINS = 500;
+const START_CENTS = 2500; // new players start with $25.00
 
 let state = {
-  coins: START_COINS,
+  cents: START_CENTS,
   owned: {},           // cardId -> copies owned
   packsOpened: 0,
   totalPulls: 0,
@@ -34,9 +34,15 @@ function load() {
       state = Object.assign(state, data);
     }
   } catch (e) { /* corrupted save: start fresh */ }
-  // Playtest grant: every save gets a one-time 1,000,000 coin boost.
+  // Coin-era saves migrate at 1 coin = $1.
+  if (state.coins !== undefined) {
+    state.cents = Math.round(state.coins * 100);
+    delete state.coins;
+    save();
+  }
+  // Playtest grant: every save gets a one-time $1,000,000 boost.
   if (!state.milGrant) {
-    state.coins += 1000000;
+    state.cents += 100000000;
     state.milGrant = true;
     save();
   }
@@ -48,6 +54,9 @@ const $ = sel => document.querySelector(sel);
 const $$ = sel => Array.from(document.querySelectorAll(sel));
 
 function fmt(n) { return n.toLocaleString('en-US'); }
+function money(cents) {
+  return '$' + (cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 function rarityRank(r) { return ['c', 'u', 'r', 'e', 'l', 'm'].indexOf(r); }
 
 function toast(msg) {
@@ -95,7 +104,7 @@ function countdown(last) {
 }
 
 function renderMeters() {
-  $('#coin-count').textContent = fmt(state.coins);
+  $('#coin-count').textContent = money(state.cents);
   const pips = Array.from({ length: STAMINA_MAX }, (_, i) =>
     `<span class="pip ${i < state.stamina ? 'full' : ''}">📦</span>`).join('');
   $('#stamina-pips').innerHTML = pips;
@@ -151,7 +160,7 @@ function sellCard(cardId, count) {
   const card = CARDS_BY_ID[cardId];
   const value = RARITIES[card.rar].sell * count;
   state.owned[cardId] = have - count;
-  state.coins += value;
+  state.cents += value;
   save();
   renderMeters();
   return value;
@@ -167,11 +176,11 @@ function sellAllDuplicates() {
     }
   }
   if (!sold) { toast('No duplicates to sell.'); return; }
-  state.coins += total;
+  state.cents += total;
   save();
   renderMeters();
   renderCollection();
-  toast(`Sold ${sold} duplicate${sold > 1 ? 's' : ''} for 🪙 ${fmt(total)}`);
+  toast(`Sold ${sold} duplicate${sold > 1 ? 's' : ''} for ${money(total)}`);
 }
 
 /* ---------------- TCG card rendering ---------------- */
@@ -206,7 +215,7 @@ function cardHTML(card, opts = {}) {
         <div class="tcg-lore">${card.lore}</div>
         <div class="tcg-foot">
           <span class="tcg-pill" style="color:${rar.color}">${rar.name.toLowerCase()}</span>
-          <span class="tcg-pill">sell 🪙${rar.sell}</span>
+          <span class="tcg-pill">sell ${money(rar.sell)}</span>
         </div>
         <div class="tcg-bottom">
           <span class="tcg-diamonds" style="color:${rar.color}">${diamonds}</span>
@@ -279,7 +288,7 @@ function renderPackView() {
     <div class="packview-blurb">${pack.blurb}</div>
     <div class="packview-actions">
       ${freeOk ? `<button class="btn primary" id="open-free-btn" ${state.stamina < 1 ? 'disabled' : ''}>📦 Open ×1</button>` : ''}
-      <button class="btn coin ${state.coins < pack.cost ? 'cant-afford' : ''}" id="open-coin-btn">🪙 ${fmt(pack.cost)}</button>
+      <button class="btn coin ${state.cents < pack.cost ? 'cant-afford' : ''}" id="open-coin-btn">${money(pack.cost)}</button>
     </div>
     <div class="packview-tools">
       <button class="btn ghost" id="rates-btn">Offering Rates</button>
@@ -302,7 +311,7 @@ function showRates(pack) {
     return `<div class="rate-row"><b>Card ${i + 1}</b><span>${cells}</span></div>`;
   }).join('');
   $('#rates-body').innerHTML = `<h3>${pack.name} — Offering Rates</h3>${rows}
-    <div class="rate-note">Every pack contains 5 cards. Rarer cards sell for more coins.</div>`;
+    <div class="rate-note">Every pack contains 5 cards. Rarer cards sell for more.</div>`;
   $('#rates-modal').classList.add('show');
 }
 
@@ -317,8 +326,8 @@ function openPack(pack, useStamina) {
     if (state.stamina >= STAMINA_MAX) state.lastStaminaAt = Date.now();
     state.stamina--;
   } else {
-    if (state.coins < pack.cost) { toast('Not enough coins — sell some duplicates!'); return; }
-    state.coins -= pack.cost;
+    if (state.cents < pack.cost) { toast('Not enough cash — sell some duplicates!'); return; }
+    state.cents -= pack.cost;
   }
   state.packsOpened++;
   const pulls = pullPack(pack);
@@ -467,7 +476,7 @@ function startWonderPick() {
     save();
     renderMeters();
     stage.innerHTML = `
-      <p class="wonder-blurb">${isNew ? 'A brand new card!' : 'A duplicate — worth 🪙' + RARITIES[picked.rar].sell}</p>
+      <p class="wonder-blurb">${isNew ? 'A brand new card!' : 'A duplicate — worth ' + money(RARITIES[picked.rar].sell)}</p>
       <div class="wonder-won">${cardHTML(picked, { isNew })}</div>
       <div class="wonder-actions">
         <button class="btn primary" id="wonder-again">Nice! Continue</button>
@@ -510,7 +519,7 @@ function renderCollection() {
       return `<div class="card-slot locked"><div class="locked-emoji">?</div></div>`;
     }
     return `<div class="card-slot">${cardHTML(c, { showCount: true, small: true })}
-      ${copies > 1 ? `<button class="btn sell-one" data-card-id="${c.id}">Sell 1 · 🪙${RARITIES[c.rar].sell}</button>` : ''}
+      ${copies > 1 ? `<button class="btn sell-one" data-card-id="${c.id}">Sell 1 · ${money(RARITIES[c.rar].sell)}</button>` : ''}
     </div>`;
   }).join('');
 
@@ -521,7 +530,7 @@ function renderCollection() {
     btn.addEventListener('click', e => {
       e.stopPropagation();
       const got = sellCard(+btn.dataset.cardId, 1);
-      toast(`Sold for 🪙 ${fmt(got)}`);
+      toast(`Sold for ${money(got)}`);
       renderCollection();
     }));
 
@@ -531,7 +540,7 @@ function renderCollection() {
   const dupBtn = $('#sell-dupes-btn');
   dupBtn.disabled = dupCount === 0;
   dupBtn.textContent = dupCount
-    ? `💰 Sell all ${dupCount} duplicates for 🪙 ${fmt(dupValue)}`
+    ? `💰 Sell all ${dupCount} duplicates for ${money(dupValue)}`
     : '💰 No duplicates to sell';
 }
 

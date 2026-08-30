@@ -27,7 +27,8 @@ Or host the folder on any static host (GitHub Pages, Netlify, Vercel).
 
 - **Open packs** — every pack contains 5 cards. Tap the pack to rip it open, then tap each
   card to flip and reveal it. Rare pulls get glow, holo shimmer, and confetti.
-- **Earn coins** — you start with 🪙 500 and claim a **free Universal Pack every 5 minutes**.
+- **Earn cash** — the in-game currency is USD. New players start with $25.00, pack stamina
+  gives free opens (2 max, +1 every 5 minutes), and selling duplicates earns more.
 - **Sell cards** — duplicates can be sold for coins (one at a time in the Collection, or all
   at once with *Sell all duplicates*). Rarer cards sell for much more.
 - **Buy more packs** — spend coins in the Pack Shop.
@@ -41,14 +42,14 @@ Or host the folder on any static host (GitHub Pages, Netlify, Vercel).
 
 | Pack | Cost | Contents |
 |---|---|---|
-| Universal Pack | 🪙 100 | All 8 categories |
-| Beast Pack | 🪙 120 | Wild Kingdom, Deep Ocean, Prehistoric |
-| Voyager Pack | 🪙 120 | Landmarks, Nations, Machines |
-| Arcane Pack | 🪙 140 | Mythic Beings, Cosmos |
-| Champions Pack | 🪙 120 | Sports Arena |
-| Showtime Pack | 🪙 120 | Screen & Stage |
-| Bedrock Pack | 🪙 120 | Rocks & Minerals |
-| Stellar Pack | 🪙 400 | All categories, premium odds — no commons, guaranteed Epic+ |
+| Universal Pack | $4.99 | All 11 categories |
+| Beast Pack | $5.99 | Wild Kingdom, Deep Ocean, Prehistoric |
+| Voyager Pack | $5.99 | Landmarks, Nations, Machines |
+| Arcane Pack | $6.99 | Mythic Beings, Cosmos |
+| Champions Pack | $5.99 | Sports Arena |
+| Showtime Pack | $5.99 | Screen & Stage |
+| Bedrock Pack | $5.99 | Rocks & Minerals |
+| Stellar Pack | $19.99 | All categories, premium odds — no commons, guaranteed Epic+ |
 
 New card sets are one block in `js/cards.js` (a category + its cards + a pack entry) — the
 plan is to keep adding sets for anything that can be a card. A battle system built on each
@@ -58,12 +59,12 @@ card's power and signature move is on the roadmap.
 
 | Rarity | Sell value | Odds (last card of a standard pack) |
 |---|---|---|
-| ◆ Common | 🪙 5 | — |
-| ◆◆ Uncommon | 🪙 12 | — |
-| ◆◆◆ Rare | 🪙 35 | 58% |
-| ◆◆◆◆ Epic | 🪙 90 | 30% |
-| ◆◆◆◆◆ Legendary | 🪙 250 | 10% |
-| ◆◆◆◆◆◆ Mythic | 🪙 700 | 2% |
+| ◆ Common | $0.15 | — |
+| ◆◆ Uncommon | $0.50 | — |
+| ◆◆◆ Rare | $2.50 | 58% |
+| ◆◆◆◆ Epic | $8.00 | 30% |
+| ◆◆◆◆◆ Legendary | $25.00 | 10% |
+| ◆◆◆◆◆◆ Mythic | $100.00 | 2% |
 
 Every standard pack's 5th card is Rare or better. Mythics (Alba the First Unicorn, The
 Kraken, The Big Bang, Zeus…) are the chase cards — one per category.

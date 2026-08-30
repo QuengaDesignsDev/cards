@@ -17,13 +17,14 @@ const CATEGORIES = {
   minerals:  { name: 'Rocks & Minerals', icon: '🪨', hue: 265 },
 };
 
+/* sell values are in cents (USD) */
 const RARITIES = {
-  c: { name: 'Common',    sell: 5,   color: '#9aa5b1' },
-  u: { name: 'Uncommon',  sell: 12,  color: '#4ade80' },
-  r: { name: 'Rare',      sell: 35,  color: '#38bdf8' },
-  e: { name: 'Epic',      sell: 90,  color: '#c084fc' },
-  l: { name: 'Legendary', sell: 250, color: '#fbbf24' },
-  m: { name: 'Mythic',    sell: 700, color: '#fb7185' },
+  c: { name: 'Common',    sell: 15,    color: '#9aa5b1' },
+  u: { name: 'Uncommon',  sell: 50,    color: '#4ade80' },
+  r: { name: 'Rare',      sell: 250,   color: '#38bdf8' },
+  e: { name: 'Epic',      sell: 800,   color: '#c084fc' },
+  l: { name: 'Legendary', sell: 2500,  color: '#fbbf24' },
+  m: { name: 'Mythic',    sell: 10000, color: '#fb7185' },
 };
 
 let _id = 0;
@@ -272,49 +273,49 @@ const STELLAR_ODDS = [
 
 const PACKS = [
   {
-    id: 'universal', name: 'Universal Pack', cost: 100, cats: null,
+    id: 'universal', name: 'Universal Pack', cost: 499, cats: null,
     icon: '🌌', grad: ['#312e81', '#7c3aed', '#0ea5e9'],
     blurb: 'Five cards from anywhere in the universe.',
     odds: STANDARD_ODDS,
   },
   {
-    id: 'beast', name: 'Beast Pack', cost: 120, cats: ['animals', 'ocean', 'dino'],
+    id: 'beast', name: 'Beast Pack', cost: 599, cats: ['animals', 'ocean', 'dino'],
     icon: '🐾', grad: ['#14532d', '#16a34a', '#a3e635'],
     blurb: 'Wild animals, deep-sea life, and prehistoric giants.',
     odds: STANDARD_ODDS,
   },
   {
-    id: 'voyager', name: 'Voyager Pack', cost: 120, cats: ['landmarks', 'nations', 'machines'],
+    id: 'voyager', name: 'Voyager Pack', cost: 599, cats: ['landmarks', 'nations', 'machines'],
     icon: '🧭', grad: ['#7c2d12', '#ea580c', '#fbbf24'],
     blurb: 'Landmarks, nations, and the machines that connect them.',
     odds: STANDARD_ODDS,
   },
   {
-    id: 'arcane', name: 'Arcane Pack', cost: 140, cats: ['myth', 'cosmos'],
+    id: 'arcane', name: 'Arcane Pack', cost: 699, cats: ['myth', 'cosmos'],
     icon: '🔮', grad: ['#2e1065', '#9333ea', '#f0abfc'],
     blurb: 'Mythic beings and the mysteries of deep space.',
     odds: STANDARD_ODDS,
   },
   {
-    id: 'champions', name: 'Champions Pack', cost: 120, cats: ['sports'],
+    id: 'champions', name: 'Champions Pack', cost: 599, cats: ['sports'],
     icon: '🏆', grad: ['#7f1d1d', '#ea580c', '#facc15'],
     blurb: 'Legends of every arena, court, and field.',
     odds: STANDARD_ODDS,
   },
   {
-    id: 'showtime', name: 'Showtime Pack', cost: 120, cats: ['screen'],
+    id: 'showtime', name: 'Showtime Pack', cost: 599, cats: ['screen'],
     icon: '🎬', grad: ['#4a044e', '#c026d3', '#f9a8d4'],
     blurb: 'Stars, tropes, and plot twists of the screen.',
     odds: STANDARD_ODDS,
   },
   {
-    id: 'bedrock', name: 'Bedrock Pack', cost: 120, cats: ['minerals'],
+    id: 'bedrock', name: 'Bedrock Pack', cost: 599, cats: ['minerals'],
     icon: '💎', grad: ['#1e1b4b', '#7c3aed', '#c4b5fd'],
     blurb: 'From a humble pet rock to the Philosopher’s Stone.',
     odds: STANDARD_ODDS,
   },
   {
-    id: 'stellar', name: 'Stellar Pack', cost: 400, cats: null,
+    id: 'stellar', name: 'Stellar Pack', cost: 1999, cats: null,
     icon: '💠', grad: ['#0c4a6e', '#0ea5e9', '#f0f9ff'],
     blurb: 'Premium odds. No commons. Guaranteed epic or better.',
     odds: STELLAR_ODDS,
