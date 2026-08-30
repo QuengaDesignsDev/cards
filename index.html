@@ -2,14 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Omniverse TCG — Collect Anything in the Universe</title>
+  <meta name="description" content="A pack-opening trading card game where the cards are anything in the universe.">
+  <meta name="theme-color" content="#0d1122">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Omniverse">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
   <header class="topbar">
     <div class="logo">🌌 <span>OMNIVERSE</span> <small>TCG</small></div>
+    <button class="btn install-btn" id="install-btn" hidden>⬇️ Install</button>
     <div class="stats">
       <div class="stat coins" title="Coins">🪙 <span id="coin-count">0</span></div>
       <div class="stat" title="Unique cards collected">🃏 <span id="stat-unique">0/0</span></div>
@@ -54,5 +64,10 @@
 
   <script src="js/cards.js"></script>
   <script src="js/game.js"></script>
+  <script>
+    if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
+    }
+  </script>
 </body>
 </html>

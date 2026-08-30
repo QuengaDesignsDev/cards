@@ -9,7 +9,12 @@ whole universe.
 
 ## ▶️ Play
 
-Open `index.html` in any browser — no build step, no server, no dependencies.
+**Live:** https://omniverse.quengadesigns.dev
+
+It's an installable **PWA**: hit *Install* in the header (or your browser's install prompt)
+to add it to your home screen or desktop, and it works fully offline after the first visit.
+
+Or open `index.html` in any browser — no build step, no server, no dependencies.
 
 ```
 open index.html          # macOS
@@ -57,10 +62,13 @@ Kraken, The Big Bang, Zeus…) are the chase cards — one per category.
 ## 🗂️ Project layout
 
 ```
-index.html      page structure
-css/style.css   all styling and animations (pack rip, card flip, holo, confetti)
-js/cards.js     card database (130 cards), rarities, categories, pack definitions
-js/game.js      game state, economy, pack opening, rendering, localStorage saves
+index.html             page structure + PWA wiring (manifest, service worker registration)
+css/style.css          all styling and animations (pack rip, card flip, holo, confetti)
+js/cards.js            card database (130 cards), rarities, categories, pack definitions
+js/game.js             game state, economy, pack opening, rendering, localStorage saves
+manifest.webmanifest   PWA manifest (name, icons, standalone display)
+sw.js                  service worker: precaches the app shell, cache-first with background refresh
+icons/                 app icons (any + maskable, 192/512, apple-touch)
 ```
 
 Adding cards is one line in `js/cards.js`; new packs are one entry in the `PACKS` array.

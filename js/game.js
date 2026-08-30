@@ -393,3 +393,20 @@ function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+/* ---------------- PWA install prompt ---------------- */
+
+let deferredInstall = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstall = e;
+  const btn = $('#install-btn');
+  btn.hidden = false;
+  btn.addEventListener('click', async () => {
+    btn.hidden = true;
+    deferredInstall.prompt();
+    await deferredInstall.userChoice;
+    deferredInstall = null;
+  }, { once: true });
+});
+window.addEventListener('appinstalled', () => { $('#install-btn').hidden = true; });

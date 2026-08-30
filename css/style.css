@@ -51,6 +51,8 @@ body {
 }
 .stat.coins { border-color: #fbbf2455; color: var(--gold); }
 
+.install-btn { padding: 6px 14px; font-size: .85rem; border-radius: 999px; }
+
 .tabs { display: flex; gap: 8px; padding: 14px 20px 0; max-width: 1200px; margin: 0 auto; }
 .tab-btn {
   background: var(--panel); color: var(--muted); border: 1px solid #ffffff14;
