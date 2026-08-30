@@ -1,7 +1,7 @@
 /* Omniverse TCG service worker — precache the app shell, serve cache-first,
    refresh the cache in the background so updates land on the next visit. */
 
-const CACHE = 'omniverse-tcg-v2';
+const CACHE = 'omniverse-tcg-v3';
 const SHELL = [
   './',
   './index.html',

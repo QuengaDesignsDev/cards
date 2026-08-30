@@ -12,6 +12,9 @@ const CATEGORIES = {
   cosmos:    { name: 'Cosmos',        icon: '🪐', hue: 235 },
   ocean:     { name: 'Deep Ocean',    icon: '🌊', hue: 190 },
   dino:      { name: 'Prehistoric',   icon: '🦖', hue: 130 },
+  sports:    { name: 'Sports Arena',  icon: '🏆', hue: 25  },
+  screen:    { name: 'Screen & Stage', icon: '🎬', hue: 325 },
+  minerals:  { name: 'Rocks & Minerals', icon: '🪨', hue: 265 },
 };
 
 const RARITIES = {
@@ -174,6 +177,59 @@ const CARDS = [
   _c('dino', 'e', '🐟', 'Megalodon', 184, 'The reason whales learned to migrate.'),
   _c('dino', 'l', '🦖', 'Tyrannosaurus Rex', 280, 'The king needs no introduction.'),
   _c('dino', 'm', '☄️', 'Chicxulub Impact', 390, 'The card that ended an era.'),
+
+  // ---------- SPORTS ARENA ----------
+  _c('sports', 'c', '⚽', 'Backyard Kickabout', 10, 'Jumpers for goalposts.'),
+  _c('sports', 'c', '🏓', 'Garage Ping-Pong', 12, 'The championship table wobbles.'),
+  _c('sports', 'c', '🎳', 'League Night Bowler', 14, 'One strike away from glory.'),
+  _c('sports', 'c', '🏸', 'Park Shuttler', 11, 'The wind is the true opponent.'),
+  _c('sports', 'c', '⛳', 'Weekend Golfer', 16, 'Blames the clubs.'),
+  _c('sports', 'u', '🏀', 'Slam Dunk Ace', 58, 'Hangs in the air a little too long.'),
+  _c('sports', 'u', '🥅', 'Brick Wall Keeper', 62, 'Nothing gets past. Nothing.'),
+  _c('sports', 'u', '🏈', 'Hail Mary Hero', 60, 'Throws prayers that get answered.'),
+  _c('sports', 'u', '🎾', 'Baseline Grinder', 56, 'Five sets? Just warming up.'),
+  _c('sports', 'r', '⚾', 'Curveball King', 112, 'Physics files a complaint.'),
+  _c('sports', 'r', '🥊', 'Southpaw Slugger', 118, 'The left you never see coming.'),
+  _c('sports', 'r', '🏒', 'Hat-Trick Hero', 110, 'Three goals, one legend.'),
+  _c('sports', 'e', '🏹', 'Bullseye Prodigy', 170, 'Splits arrows for fun.'),
+  _c('sports', 'e', '🏋️', 'Iron Titan', 178, 'Warm-up weight: your max.'),
+  _c('sports', 'l', '🥇', 'The G.O.A.T.', 265, 'Retired numbers in every league.'),
+  _c('sports', 'm', '🏆', 'The Perfect Season', 385, 'Undefeated. Untied. Unrepeatable.'),
+
+  // ---------- SCREEN & STAGE ----------
+  _c('screen', 'c', '🎤', 'Karaoke Legend', 12, 'Off-key, on heart.'),
+  _c('screen', 'c', '🍿', 'Popcorn Critic', 10, 'Two thumbs, always buttered.'),
+  _c('screen', 'c', '📺', 'Laugh Track', 14, 'Ha. Ha. Ha.'),
+  _c('screen', 'c', '🎭', 'Background Extra', 9, 'Blink and you’ll miss them. They noticed.'),
+  _c('screen', 'c', '🧟', 'Zombie Extra #42', 15, 'Method actor. Ate the craft table.'),
+  _c('screen', 'u', '🕵️', 'Detective Noir', 60, 'The rain knows what you did.'),
+  _c('screen', 'u', '👯', 'Soap Opera Twin', 54, 'Returned from the dead. Twice.'),
+  _c('screen', 'u', '🤠', 'Stunt Double', 64, 'Falls for a living.'),
+  _c('screen', 'u', '🎬', 'Indie Director', 58, 'Three cameras, one dream.'),
+  _c('screen', 'r', '🚀', 'Space Captain', 116, 'Boldly reruns forever.'),
+  _c('screen', 'r', '🦸', 'Caped Crusader', 120, 'The reboot of the reboot.'),
+  _c('screen', 'r', '🧙', 'Wizard Mentor', 108, 'Dies in act one. Returns in act three.'),
+  _c('screen', 'e', '🦖', 'Kaiju Attack', 180, 'Filmed on location. Location destroyed.'),
+  _c('screen', 'e', '📽️', 'Plot Twist', 168, 'It was the butler AND the twin.'),
+  _c('screen', 'l', '🛡️', 'Plot Armor', 260, 'Cannot die before the finale.'),
+  _c('screen', 'm', '🌟', 'Season Finale', 390, 'To be continued…'),
+
+  // ---------- ROCKS & MINERALS ----------
+  _c('minerals', 'c', '🪨', 'Pet Rock', 5, 'Loyal. Quiet. Rock solid.'),
+  _c('minerals', 'c', '🧱', 'Humble Brick', 8, 'One of history’s greatest team players.'),
+  _c('minerals', 'c', '🏖️', 'Sand Grain', 3, 'Small. Countless. Inevitable.'),
+  _c('minerals', 'c', '⚪', 'River Pebble', 6, 'Skipped four times. A record.'),
+  _c('minerals', 'u', '🔮', 'Quartz Cluster', 52, 'Charged under a full moon, allegedly.'),
+  _c('minerals', 'u', '🖤', 'Obsidian Shard', 58, 'Sharp enough to cut time.'),
+  _c('minerals', 'u', '✨', 'Fool’s Gold', 50, 'Fooled everyone but the assayer.'),
+  _c('minerals', 'u', '🧂', 'Salt Crystal', 48, 'Ancient currency, modern seasoning.'),
+  _c('minerals', 'r', '🥚', 'Cracked Geode', 108, 'Ugly outside, galaxy inside.'),
+  _c('minerals', 'r', '💜', 'Amethyst Spire', 112, 'Grown one drip at a time for ages.'),
+  _c('minerals', 'r', '🌋', 'Lava Bomb', 115, 'Freshly delivered by volcano.'),
+  _c('minerals', 'e', '💎', 'Flawless Diamond', 176, 'Pressure made it unbreakable.'),
+  _c('minerals', 'e', '🧊', 'Opal Fire', 165, 'Every angle, a different sunset.'),
+  _c('minerals', 'l', '☄️', 'Meteorite Core', 262, 'Older than the planet it landed on.'),
+  _c('minerals', 'm', '🪄', 'Philosopher’s Stone', 395, 'Turns everything to gold, allegedly.'),
 ];
 
 const CARDS_BY_ID = Object.fromEntries(CARDS.map(c => [c.id, c]));
@@ -188,6 +244,9 @@ const MOVES = {
   cosmos:    ['Star Spark', 'Nova Flare', 'Event Horizon'],
   ocean:     ['Bubble Jet', 'Abyssal Grip', "Kraken's Embrace"],
   dino:      ['Fossil Bite', 'Primal Crunch', 'Extinction Stomp'],
+  sports:    ['Warm-Up Lap', 'Power Play', 'Championship Point'],
+  screen:    ['Cold Open', 'Dramatic Zoom', 'Series Finale'],
+  minerals:  ['Rock Toss', 'Crystal Lance', 'Tectonic Slam'],
 };
 
 function moveFor(card) {
@@ -234,6 +293,24 @@ const PACKS = [
     id: 'arcane', name: 'Arcane Pack', cost: 140, cats: ['myth', 'cosmos'],
     icon: '🔮', grad: ['#2e1065', '#9333ea', '#f0abfc'],
     blurb: 'Mythic beings and the mysteries of deep space.',
+    odds: STANDARD_ODDS,
+  },
+  {
+    id: 'champions', name: 'Champions Pack', cost: 120, cats: ['sports'],
+    icon: '🏆', grad: ['#7f1d1d', '#ea580c', '#facc15'],
+    blurb: 'Legends of every arena, court, and field.',
+    odds: STANDARD_ODDS,
+  },
+  {
+    id: 'showtime', name: 'Showtime Pack', cost: 120, cats: ['screen'],
+    icon: '🎬', grad: ['#4a044e', '#c026d3', '#f9a8d4'],
+    blurb: 'Stars, tropes, and plot twists of the screen.',
+    odds: STANDARD_ODDS,
+  },
+  {
+    id: 'bedrock', name: 'Bedrock Pack', cost: 120, cats: ['minerals'],
+    icon: '💎', grad: ['#1e1b4b', '#7c3aed', '#c4b5fd'],
+    blurb: 'From a humble pet rock to the Philosopher’s Stone.',
     odds: STANDARD_ODDS,
   },
   {

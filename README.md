@@ -31,8 +31,10 @@ Or host the folder on any static host (GitHub Pages, Netlify, Vercel).
 - **Sell cards** — duplicates can be sold for coins (one at a time in the Collection, or all
   at once with *Sell all duplicates*). Rarer cards sell for much more.
 - **Buy more packs** — spend coins in the Pack Shop.
-- **Collect** — 130 unique cards across 8 categories. Filter the Collection by category and
-  rarity; unowned cards show as locked silhouettes.
+- **Collect** — 177 unique cards across 11 categories (from wild animals and nations to
+  sports legends, screen tropes, and a genuinely excellent pet rock). Filter the Collection
+  by category and rarity; unowned cards show as locked silhouettes, and tapping an owned
+  card shows it full-size.
 - **Progress saves automatically** in your browser (localStorage).
 
 ## 📦 Packs
@@ -43,7 +45,14 @@ Or host the folder on any static host (GitHub Pages, Netlify, Vercel).
 | Beast Pack | 🪙 120 | Wild Kingdom, Deep Ocean, Prehistoric |
 | Voyager Pack | 🪙 120 | Landmarks, Nations, Machines |
 | Arcane Pack | 🪙 140 | Mythic Beings, Cosmos |
+| Champions Pack | 🪙 120 | Sports Arena |
+| Showtime Pack | 🪙 120 | Screen & Stage |
+| Bedrock Pack | 🪙 120 | Rocks & Minerals |
 | Stellar Pack | 🪙 400 | All categories, premium odds — no commons, guaranteed Epic+ |
+
+New card sets are one block in `js/cards.js` (a category + its cards + a pack entry) — the
+plan is to keep adding sets for anything that can be a card. A battle system built on each
+card's power and signature move is on the roadmap.
 
 ## ✨ Rarities
 
