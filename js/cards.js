@@ -15,6 +15,8 @@ const CATEGORIES = {
   sports:    { name: 'Sports Arena',  icon: '🏆', hue: 25  },
   screen:    { name: 'Screen & Stage', icon: '🎬', hue: 325 },
   minerals:  { name: 'Rocks & Minerals', icon: '🪨', hue: 265 },
+  creatures: { name: 'Creature TCG',  icon: '🐲', hue: 150 },
+  games:     { name: 'Game World',    icon: '🎮', hue: 215 },
 };
 
 /* sell values are in cents (USD) */
@@ -231,6 +233,42 @@ const CARDS = [
   _c('minerals', 'e', '🧊', 'Opal Fire', 165, 'Every angle, a different sunset.'),
   _c('minerals', 'l', '☄️', 'Meteorite Core', 262, 'Older than the planet it landed on.'),
   _c('minerals', 'm', '🪄', 'Philosopher’s Stone', 395, 'Turns everything to gold, allegedly.'),
+
+  // ---------- CREATURE TCG ----------
+  _c('creatures', 'c', '⚡', 'Sparkit', 18, 'A static ball of mischief that naps in outlets.'),
+  _c('creatures', 'c', '🔥', 'Embercub', 22, 'Warm hugs, singed sleeves.'),
+  _c('creatures', 'c', '💧', 'Dribblet', 16, 'A raindrop that refused to land.'),
+  _c('creatures', 'c', '🍄', 'Fungalore', 20, 'Grows a new hat every morning.'),
+  _c('creatures', 'c', '🪴', 'Sproutle', 14, 'Photosynthesizes pure optimism.'),
+  _c('creatures', 'u', '🦇', 'Echowing', 56, 'Hears your next move before you make it.'),
+  _c('creatures', 'u', '🪼', 'Voltjelly', 62, 'A drifting thundercloud with tentacles.'),
+  _c('creatures', 'u', '🦔', 'Quillbolt', 60, 'Every quill is a lightning rod.'),
+  _c('creatures', 'u', '🐸', 'Bogaloo', 54, 'Its croak lowers the temperature.'),
+  _c('creatures', 'r', '🐺', 'Lunafang', 118, 'Howls in frequencies only the moon hears.'),
+  _c('creatures', 'r', '🦅', 'Galestrike', 114, 'Rides its own hurricane.'),
+  _c('creatures', 'r', '🐍', 'Venomora', 110, 'Its shadow is the venomous part.'),
+  _c('creatures', 'e', '🐉', 'Pyrewyrm', 182, 'Sleeps inside volcanoes to stay cozy.'),
+  _c('creatures', 'e', '❄️', 'Cryostag', 172, 'Winter follows wherever it walks.'),
+  _c('creatures', 'l', '⏳', 'Chronowyrm', 275, 'Sheds its skin once per century, backwards.'),
+  _c('creatures', 'm', '🌌', 'Omnimon Prime', 400, 'The first creature. And the last.'),
+
+  // ---------- GAME WORLD ----------
+  _c('games', 'c', '🕹️', '8-Bit Hero', 15, 'Three lives, zero fear.'),
+  _c('games', 'c', '🧱', 'Tutorial Crate', 8, 'Press A to break. You never forgot.'),
+  _c('games', 'c', '💬', 'NPC With One Line', 10, '“Nice weather we’re having.”'),
+  _c('games', 'c', '🪙', 'Coin Block', 12, 'Bonk. Cha-ching.'),
+  _c('games', 'c', '🐤', 'Escort Mission', 9, 'Please. Stay. On. The. Path.'),
+  _c('games', 'u', '🏃', 'Speedrunner', 64, 'Beat the game before the logo faded.'),
+  _c('games', 'u', '👺', 'Loot Goblin', 58, 'Runs the moment you see it.'),
+  _c('games', 'u', '🛡️', 'Tank Main', 60, 'Picks the shield. Every time.'),
+  _c('games', 'u', '🧪', 'Health Potion', 52, 'Chugged at 1 HP since forever.'),
+  _c('games', 'r', '🗡️', 'Legendary Drop', 116, '0.01% chance. 100% bragging rights.'),
+  _c('games', 'r', '🧟', 'Respawn Point', 108, 'Death is a mild inconvenience.'),
+  _c('games', 'r', '🎯', 'Headshot Streak', 120, 'Aim assist not included.'),
+  _c('games', 'e', '👾', 'Secret Level', 178, 'Behind the waterfall. Always.'),
+  _c('games', 'e', '🐲', 'Final Boss', 185, 'Three phases. The last one has wings.'),
+  _c('games', 'l', '💾', 'Day One Patch', 258, '48 GB of humility.'),
+  _c('games', 'm', '♾️', 'New Game+', 405, 'Everything again, but harder. You smiled.'),
 ];
 
 const CARDS_BY_ID = Object.fromEntries(CARDS.map(c => [c.id, c]));
@@ -248,11 +286,28 @@ const MOVES = {
   sports:    ['Warm-Up Lap', 'Power Play', 'Championship Point'],
   screen:    ['Cold Open', 'Dramatic Zoom', 'Series Finale'],
   minerals:  ['Rock Toss', 'Crystal Lance', 'Tectonic Slam'],
+  creatures: ['Tackle Spark', 'Elemental Burst', 'Primeval Roar'],
+  games:     ['Button Mash', 'Combo Chain', 'Ultimate Unlock'],
 };
 
 function moveFor(card) {
   const tier = { c: 0, u: 0, r: 1, e: 1, l: 2, m: 2 }[card.rar];
   return { name: MOVES[card.cat][tier], cost: tier + 1 };
+}
+
+/* Per-card market value in cents: rarity base scaled ±25% by the card's
+   power relative to its rarity's power range. Deterministic per card. */
+const MARKET_BASE = { c: 20, u: 60, r: 300, e: 900, l: 2800, m: 12000 };
+const _powRange = {};
+for (const c of CARDS) {
+  const r = _powRange[c.rar] || (_powRange[c.rar] = { min: Infinity, max: -Infinity });
+  r.min = Math.min(r.min, c.pow);
+  r.max = Math.max(r.max, c.pow);
+}
+function marketValue(card) {
+  const r = _powRange[card.rar];
+  const t = r.max > r.min ? (card.pow - r.min) / (r.max - r.min) : .5;
+  return Math.round(MARKET_BASE[card.rar] * (0.75 + 0.5 * t));
 }
 
 /* Pack definitions. cats: null = all categories. odds: per-slot rarity tables. */
@@ -312,6 +367,18 @@ const PACKS = [
     id: 'bedrock', name: 'Bedrock Pack', cost: 599, cats: ['minerals'],
     icon: '💎', grad: ['#1e1b4b', '#7c3aed', '#c4b5fd'],
     blurb: 'From a humble pet rock to the Philosopher’s Stone.',
+    odds: STANDARD_ODDS,
+  },
+  {
+    id: 'creature', name: 'Creature Pack', cost: 799, cats: ['creatures'],
+    icon: '🐲', grad: ['#052e16', '#16a34a', '#5eead4'],
+    blurb: 'Original battle monsters, from Sparkit to Omnimon Prime.',
+    odds: STANDARD_ODDS,
+  },
+  {
+    id: 'playerone', name: 'Player One Pack', cost: 599, cats: ['games'],
+    icon: '🎮', grad: ['#1e3a8a', '#3b82f6', '#a5f3fc'],
+    blurb: 'Heroes, bosses, and loot from every game world.',
     odds: STANDARD_ODDS,
   },
   {

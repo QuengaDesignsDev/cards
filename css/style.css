@@ -420,6 +420,8 @@ main { flex: 1; padding: 4px 16px 20px; }
 
 /* ---------------- rates modal ---------------- */
 
+.overlay.modal { z-index: 58; }
+
 .modal .modal-panel {
   background: var(--panel); border-radius: 22px; box-shadow: var(--shadow);
   padding: 24px 22px; max-width: 440px; width: calc(100% - 40px);
@@ -435,11 +437,126 @@ main { flex: 1; padding: 4px 16px 20px; }
 .rate-row b { color: var(--text-strong); }
 .rate-note { font-size: .78rem; color: var(--muted); margin-top: 10px; }
 
-/* ---------------- card viewer ---------------- */
+/* ---------------- 3D card viewer ---------------- */
 
-.viewer { flex-direction: column; gap: 18px; cursor: pointer; }
-.viewer .tcg-card { font-size: 12px; }
-.viewer-hint { color: var(--muted); font-weight: 900; }
+.viewer { flex-direction: column; gap: 12px; overflow-y: auto; padding: 24px 0; }
+.viewer-stage {
+  perspective: 1200px; touch-action: none; cursor: grab;
+  padding: 10px 40px;
+}
+.viewer-stage:active { cursor: grabbing; }
+.viewer-3d { pointer-events: none; }
+.v3d-inner {
+  position: relative; transform-style: preserve-3d;
+  will-change: transform;
+  width: calc(24em * 1.5); height: calc(33.5em * 1.5);
+  font-size: 8px;
+}
+.v3d-inner .tcg-card { font-size: 12px; }
+.v3d-face {
+  position: absolute; inset: 0; backface-visibility: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+.v3d-back { transform: rotateY(180deg); }
+.v3d-glare {
+  position: absolute; inset: 0; pointer-events: none; border-radius: 14px;
+  mix-blend-mode: screen;
+}
+.viewer-hint { color: var(--muted); font-weight: 900; font-size: .8rem; }
+
+.viewer-copies {
+  background: var(--panel); border-radius: 18px; box-shadow: var(--shadow);
+  padding: 14px 16px; width: min(92vw, 420px);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.viewer-title { font-weight: 900; color: var(--text-strong); text-align: center; font-size: .95rem; }
+.copy-list { display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto; }
+.copy-row {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  background: #f2f6fc; border-radius: 12px; padding: 7px 12px; font-size: .8rem;
+}
+.copy-status { color: var(--muted); font-weight: 800; }
+.copy-grade { color: var(--gold); font-weight: 900; }
+.copy-actions { display: flex; gap: 6px; }
+.btn.mini { padding: 6px 10px; font-size: .7rem; box-shadow: none; background: #fff; }
+
+/* ---------------- OmniGrade ---------------- */
+
+.grade-h { color: var(--text-strong); font-weight: 900; margin: 18px 0 10px; text-align: center; }
+.grade-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; }
+.grade-list { display: flex; flex-direction: column; gap: 8px; }
+.grade-pending {
+  background: var(--panel); border-radius: 14px; box-shadow: var(--shadow-sm);
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 16px; font-weight: 800; font-size: .88rem;
+}
+.grade-eta { color: var(--muted); font-size: .78rem; }
+.grade-eta b { color: #1798a9; }
+
+.grade-ready {
+  background: none; border: none; cursor: pointer; font-family: inherit;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  animation: hint-pulse 1.4s ease-in-out infinite;
+}
+.grade-ready-label { font-weight: 900; color: #1798a9; font-size: .8rem; }
+
+.slab {
+  position: relative; cursor: pointer;
+  background: linear-gradient(170deg, #ffffffd9, #dbe4efd9);
+  border: 3px solid #ffffff;
+  border-radius: 14px; padding: 8px 8px 6px;
+  box-shadow: 0 10px 22px rgba(70, 90, 130, .25), inset 0 0 12px #ffffff8c;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.slab-label {
+  width: 100%; display: grid; grid-template-columns: 1fr auto;
+  grid-template-areas: "brand grade" "name grade";
+  background: #fff; border-radius: 8px; padding: 4px 8px;
+  box-shadow: var(--shadow-sm);
+}
+.slab-brand { grid-area: brand; font-size: .55rem; font-weight: 900; letter-spacing: 1px; color: #1798a9; }
+.slab-name { grid-area: name; font-size: .68rem; font-weight: 900; color: var(--text-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px; }
+.slab-grade {
+  grid-area: grade; align-self: center;
+  font-size: 1.25rem; font-weight: 900; color: var(--text-strong);
+  background: linear-gradient(160deg, #fef3c7, #fbbf24);
+  border-radius: 8px; padding: 2px 9px;
+}
+.slab-score { font-size: .68rem; font-weight: 900; color: var(--muted); }
+
+.grade-badge {
+  position: absolute; top: 0; right: 0; z-index: 3;
+  background: linear-gradient(90deg, #fbbf24, #f59e0b); color: #fff;
+  font-size: 1.2em; font-weight: 900; padding: .3em 1em;
+  border-radius: 0 1.4em 0 1em;
+}
+
+/* grading report (in modal) */
+.report-card { font-weight: 800; color: var(--text-strong); }
+.report-grade {
+  font-size: 3rem; font-weight: 900; color: var(--text-strong);
+  background: linear-gradient(160deg, #fef3c7, #fbbf24);
+  border-radius: 16px; padding: 2px 22px; width: fit-content; margin: 6px auto;
+}
+.report-score { color: var(--muted); font-weight: 900; margin-bottom: 10px; }
+.report-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
+.report-label { width: 84px; text-align: left; font-size: .78rem; font-weight: 800; color: var(--text-strong); }
+.report-bar { flex: 1; height: 10px; background: #edf1f7; border-radius: 5px; overflow: hidden; }
+.report-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, #35c6d9, #35d9b9); }
+.report-val { width: 40px; text-align: right; font-size: .78rem; font-weight: 900; color: var(--muted); }
+
+.cond-chip { font-weight: 900; font-size: .95rem; }
+.result-cond { font-size: .72rem; font-weight: 900; margin-top: 4px; text-align: center; }
+.locked-buy {
+  font-size: .68rem; font-weight: 900; color: var(--muted);
+  background: #ffffffcc; border-radius: 999px; padding: 3px 10px; margin-top: 6px;
+}
+.nav-dot {
+  position: absolute; top: 2px; right: 10px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #f43f5e; border: 2px solid #fff;
+}
+.nav-btn { position: relative; }
 
 /* ---------------- wonder pick ---------------- */
 
@@ -472,8 +589,7 @@ main { flex: 1; padding: 4px 16px 20px; }
 .collection-grid {
   display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;
 }
-.card-slot { display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; }
-.card-slot .sell-one { font-size: .68rem; padding: 6px 12px; }
+.card-slot { display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; cursor: pointer; }
 
 .card-slot.locked {
   width: 129px; height: 181px; border-radius: 12px;
