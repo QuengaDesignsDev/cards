@@ -34,6 +34,12 @@ function load() {
       state = Object.assign(state, data);
     }
   } catch (e) { /* corrupted save: start fresh */ }
+  // Playtest grant: every save gets a one-time 1,000,000 coin boost.
+  if (!state.milGrant) {
+    state.coins += 1000000;
+    state.milGrant = true;
+    save();
+  }
 }
 
 /* ---------------- helpers ---------------- */
@@ -508,6 +514,9 @@ function renderCollection() {
     </div>`;
   }).join('');
 
+  $$('#collection-grid .card-slot:not(.locked) .tcg-card').forEach(el =>
+    el.addEventListener('click', () => showCardViewer(+el.dataset.cardId)));
+
   $$('#collection-grid .sell-one').forEach(btn =>
     btn.addEventListener('click', e => {
       e.stopPropagation();
@@ -524,6 +533,15 @@ function renderCollection() {
   dupBtn.textContent = dupCount
     ? `💰 Sell all ${dupCount} duplicates for 🪙 ${fmt(dupValue)}`
     : '💰 No duplicates to sell';
+}
+
+/* ---------------- full-size card viewer ---------------- */
+
+function showCardViewer(cardId) {
+  const card = CARDS_BY_ID[cardId];
+  if (!card) return;
+  $('#viewer-body').innerHTML = cardHTML(card, { showCount: true });
+  $('#viewer-modal').classList.add('show');
 }
 
 /* ---------------- boot ---------------- */
@@ -545,6 +563,7 @@ function init() {
   $('#rates-modal').addEventListener('click', e => {
     if (e.target === e.currentTarget) e.currentTarget.classList.remove('show');
   });
+  $('#viewer-modal').addEventListener('click', () => $('#viewer-modal').classList.remove('show'));
   $('#reset-btn').addEventListener('click', () => {
     if (confirm('Reset ALL progress? Your collection and coins will be lost.')) {
       localStorage.removeItem(SAVE_KEY);

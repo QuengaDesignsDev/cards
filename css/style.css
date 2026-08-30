@@ -40,7 +40,8 @@ body {
 
 .topbar {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 18px; gap: 10px;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 18px 14px;
+  gap: 10px;
   position: sticky; top: 0; z-index: 20;
   background: #eef3fac9; backdrop-filter: blur(10px);
 }
@@ -432,6 +433,12 @@ main { flex: 1; padding: 4px 16px 20px; }
 }
 .rate-row b { color: var(--text-strong); }
 .rate-note { font-size: .78rem; color: var(--muted); margin-top: 10px; }
+
+/* ---------------- card viewer ---------------- */
+
+.viewer { flex-direction: column; gap: 18px; cursor: pointer; }
+.viewer .tcg-card { font-size: 12px; }
+.viewer-hint { color: var(--muted); font-weight: 900; }
 
 /* ---------------- wonder pick ---------------- */
 
