@@ -419,6 +419,10 @@ function renderPackView() {
       ${freeOk ? `<button class="btn primary" id="open-free-btn" ${state.stamina < 1 ? 'disabled' : ''}>📦 Open ×1</button>` : ''}
       <button class="btn coin ${state.cents < pack.cost ? 'cant-afford' : ''}" id="open-coin-btn">${money(pack.cost)}</button>
     </div>
+    <div class="packview-actions">
+      <button class="btn coin ${state.cents < pack.cost * 5 ? 'cant-afford' : ''}" id="open-x5-btn">×5 · ${money(pack.cost * 5)}</button>
+      <button class="btn coin ${state.cents < pack.cost * 10 ? 'cant-afford' : ''}" id="open-x10-btn">×10 · ${money(pack.cost * 10)}</button>
+    </div>
     <div class="packview-tools">
       <button class="btn ghost" id="rates-btn">Offering Rates</button>
       <button class="btn ghost" id="packview-back">↩ Back</button>
@@ -428,6 +432,8 @@ function renderPackView() {
   const freeBtn = $('#open-free-btn');
   if (freeBtn) freeBtn.addEventListener('click', () => openPack(pack, true));
   $('#open-coin-btn').addEventListener('click', () => openPack(pack, false));
+  $('#open-x5-btn').addEventListener('click', () => openPack(pack, false, 5));
+  $('#open-x10-btn').addEventListener('click', () => openPack(pack, false, 10));
   $('#rates-btn').addEventListener('click', () => showRates(pack));
   $('#packview-back').addEventListener('click', () => showScreen('home'));
 }
@@ -453,35 +459,41 @@ function showModal(html) {
 
 let opening = null; // { pack, pulls, newSet, idx }
 
-function openPack(pack, useStamina) {
+function openPack(pack, useStamina, count = 1) {
   if (useStamina) {
     regenTick();
     if (state.stamina < 1) { toast('No pack stamina — wait for it to recharge!'); return; }
     if (state.stamina >= STAMINA_MAX) state.lastStaminaAt = Date.now();
     state.stamina--;
   } else {
-    if (state.cents < pack.cost) { toast('Not enough cash — sell some duplicates!'); return; }
-    state.cents -= pack.cost;
+    const total = pack.cost * count;
+    if (state.cents < total) { toast('Not enough cash — sell some duplicates!'); return; }
+    state.cents -= total;
   }
-  state.packsOpened++;
-  const cards = pullPack(pack);
-  const newSet = new Set(cards.filter(c => countOf(c.id) === 0).map(c => c.id));
-  const pulls = cards.map(c => {
-    state.totalPulls++;
-    return { card: c, copy: addCopy(c.id) };
-  });
+  state.packsOpened += count;
+  const newSet = new Set();
+  const pulls = [];
+  for (let i = 0; i < count; i++) {
+    for (const card of pullPack(pack)) {
+      if (countOf(card.id) === 0) newSet.add(card.id);
+      state.totalPulls++;
+      pulls.push({ card, copy: addCopy(card.id) });
+    }
+  }
   save();
   renderMeters();
-  opening = { pack, pulls, newSet, idx: 0 };
+  opening = { pack, pulls, newSet, idx: 0, count };
   $('#opening-overlay').classList.add('show');
   $('#opening-stage').innerHTML = `
     <div class="rip-pack" id="rip-pack">
       ${packVisualHTML(pack, 'big')}
+      ${count > 1 ? `<div class="rip-stack">×${count} packs</div>` : ''}
       <div class="rip-hint">Tap to rip open!</div>
     </div>`;
   $('#rip-pack').addEventListener('click', () => {
     $('#rip-pack').classList.add('ripping');
-    setTimeout(showNextCard, 550);
+    // Bulk opens go straight to the full haul; singles reveal card by card.
+    setTimeout(count > 1 ? showResults : showNextCard, 550);
   }, { once: true });
 }
 
@@ -512,12 +524,18 @@ function showNextCard() {
 }
 
 function showResults() {
-  const { pulls, newSet } = opening;
+  const { pulls, newSet, count } = opening;
   const seen = new Set();
+  const totalValue = pulls.reduce((a, p) => a + copyValue(p.copy), 0);
   $('#opening-stage').innerHTML = `
     <div class="results">
-      <h2 class="results-title">Opening Results</h2>
+      <h2 class="results-title">Opening Results${count > 1 ? ` ×${count}` : ''}</h2>
       <div class="results-rule"></div>
+      ${count > 1 ? `<div class="results-summary">
+        <span class="summary-chip">✨ ${newSet.size} new</span>
+        <span class="summary-chip">🃏 ${pulls.length} cards</span>
+        <span class="summary-chip">💵 ${money(totalValue)}</span>
+      </div>` : ''}
       <div class="results-grid">
         ${pulls.map(({ card, copy }) => {
           const isNew = newSet.has(card.id) && !seen.has(card.id);
@@ -535,15 +553,16 @@ function showResults() {
 }
 
 function finishOpening() {
-  const { pulls, newSet } = opening;
+  const { pulls, newSet, count } = opening;
   const best = pulls.reduce((a, b) => rarityRank(b.card.rar) > rarityRank(a.card.rar) ? b : a).card;
   $('#opening-overlay').classList.remove('show');
   opening = null;
   renderMeters();
   renderPackView();
+  const prefix = count > 1 ? `${count} packs · ` : '';
   toast(newSet.size
-    ? `${newSet.size} new card${newSet.size > 1 ? 's' : ''}! Best pull: ${best.emoji} ${best.name}`
-    : `All duplicates — sell them for cash! Best: ${best.emoji} ${best.name}`);
+    ? `${prefix}${newSet.size} new card${newSet.size > 1 ? 's' : ''}! Best pull: ${best.emoji} ${best.name}`
+    : `${prefix}All duplicates — sell them for cash! Best: ${best.emoji} ${best.name}`);
 }
 
 /* tiny confetti burst for epic+ pulls */

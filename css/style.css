@@ -350,7 +350,10 @@ main { flex: 1; padding: 4px 16px 20px; }
   backdrop-filter: blur(6px);
 }
 .overlay.show { display: flex; }
-.opening-stage { width: 100%; max-width: 560px; padding: 20px; text-align: center; }
+.opening-stage {
+  width: 100%; max-width: 560px; padding: 20px; text-align: center;
+  max-height: 100vh; max-height: 100dvh; overflow-y: auto;
+}
 
 .rip-pack { display: inline-flex; flex-direction: column; align-items: center; gap: 18px; cursor: pointer; }
 .rip-pack .pack-visual { animation: pack-wiggle 1.6s ease-in-out infinite; }
@@ -398,6 +401,16 @@ main { flex: 1; padding: 4px 16px 20px; }
 .results-rule {
   width: min(90%, 420px); height: 4px; border-radius: 2px;
   background: linear-gradient(90deg, #34d399, #fbbf24, #f472b6, #818cf8);
+}
+.results-summary { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.summary-chip {
+  background: var(--panel); border-radius: 999px; padding: 6px 14px;
+  font-size: .8rem; font-weight: 900; color: var(--text-strong);
+  box-shadow: var(--shadow-sm);
+}
+.rip-stack {
+  background: #ffffffd9; border-radius: 999px; padding: 5px 16px;
+  font-weight: 900; color: var(--text-strong); box-shadow: var(--shadow-sm);
 }
 .results-grid {
   display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;
