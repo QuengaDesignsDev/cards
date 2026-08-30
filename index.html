@@ -5,59 +5,99 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Omniverse TCG — Collect Anything in the Universe</title>
   <meta name="description" content="A pack-opening trading card game where the cards are anything in the universe.">
-  <meta name="theme-color" content="#0d1122">
+  <meta name="theme-color" content="#e9eef5">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Omniverse">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-  <header class="topbar">
-    <div class="logo">🌌 <span>OMNIVERSE</span> <small>TCG</small></div>
-    <button class="btn install-btn" id="install-btn" hidden>⬇️ Install</button>
-    <div class="stats">
-      <div class="stat coins" title="Coins">🪙 <span id="coin-count">0</span></div>
-      <div class="stat" title="Unique cards collected">🃏 <span id="stat-unique">0/0</span></div>
-      <div class="stat" title="Packs opened">📦 <span id="stat-packs">0</span></div>
-    </div>
-  </header>
+  <div class="phone">
 
-  <nav class="tabs">
-    <button class="tab-btn active" data-tab="shop">🛒 Pack Shop</button>
-    <button class="tab-btn" data-tab="collection">🗂️ Collection</button>
-  </nav>
+    <header class="topbar">
+      <div class="logo">🌌 <span>OMNIVERSE</span></div>
+      <button class="btn install-btn" id="install-btn" hidden>⬇️ Install</button>
+      <div class="stat coins">🪙 <span id="coin-count">0</span></div>
+    </header>
 
-  <main>
-    <!-- SHOP -->
-    <section id="view-shop" class="view active">
-      <div class="free-pack-row">
-        <button class="btn primary" id="free-pack-btn">🎁 Claim Free Pack</button>
-      </div>
-      <div id="pack-grid" class="pack-grid"></div>
-    </section>
+    <main>
+      <!-- HOME -->
+      <section id="screen-home" class="screen active">
+        <div class="shelf-panel">
+          <div class="pack-shelf" id="pack-shelf"></div>
+        </div>
+        <div class="stamina-bar">
+          <div class="stamina-pips" id="stamina-pips"></div>
+          <div class="stamina-note" id="stamina-note">MAX</div>
+        </div>
+        <div class="home-cards">
+          <button class="home-card" id="home-wonder-card">
+            <div class="home-card-icon">✨</div>
+            <div class="home-card-name">Wonder Pick</div>
+            <div class="home-card-sub" id="wonder-note">⭐⭐</div>
+          </button>
+          <button class="home-card" id="home-collection-card">
+            <div class="home-card-icon">🗂️</div>
+            <div class="home-card-name">Collection</div>
+            <div class="home-card-sub">& sell duplicates</div>
+          </button>
+        </div>
+      </section>
 
-    <!-- COLLECTION -->
-    <section id="view-collection" class="view">
-      <div class="collection-tools">
-        <div id="cat-filters" class="filter-row"></div>
-        <div id="rar-filters" class="filter-row"></div>
-        <button class="btn" id="sell-dupes-btn">💰 Sell all duplicates</button>
-      </div>
-      <div id="collection-grid" class="collection-grid"></div>
-      <div class="danger-zone">
-        <button class="btn danger" id="reset-btn">Reset all progress</button>
-      </div>
-    </section>
-  </main>
+      <!-- PACK VIEW -->
+      <section id="screen-packview" class="screen">
+        <div id="packview-stage"></div>
+      </section>
+
+      <!-- WONDER PICK -->
+      <section id="screen-wonder" class="screen">
+        <h2 class="screen-title">✨ Wonder Pick</h2>
+        <div id="wonder-stage"></div>
+      </section>
+
+      <!-- COLLECTION -->
+      <section id="screen-collection" class="screen">
+        <h2 class="screen-title">🗂️ Collection</h2>
+        <div class="collection-stats" id="collection-stats"></div>
+        <div class="collection-tools">
+          <div id="cat-filters" class="filter-row"></div>
+          <div id="rar-filters" class="filter-row"></div>
+          <button class="btn" id="sell-dupes-btn">💰 Sell all duplicates</button>
+        </div>
+        <div id="collection-grid" class="collection-grid"></div>
+        <div class="danger-zone">
+          <button class="btn danger" id="reset-btn">Reset all progress</button>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-nav="home">🏠<span>Home</span></button>
+      <button class="nav-btn" data-nav="wonder">✨<span>Wonder</span></button>
+      <button class="nav-btn" data-nav="collection">🗂️<span>Cards</span></button>
+    </nav>
+
+  </div>
 
   <!-- PACK OPENING OVERLAY -->
   <div id="opening-overlay" class="overlay">
     <div id="opening-stage" class="opening-stage"></div>
+  </div>
+
+  <!-- OFFERING RATES MODAL -->
+  <div id="rates-modal" class="overlay modal">
+    <div class="modal-panel">
+      <div id="rates-body"></div>
+      <button class="btn primary" id="rates-close">Close</button>
+    </div>
   </div>
 
   <div id="toast" class="toast"></div>

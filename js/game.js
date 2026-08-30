@@ -1,17 +1,22 @@
 /* ============================================================
-   OMNIVERSE TCG — Game logic & UI
+   OMNIVERSE TCG — Game logic & UI (Pocket-style)
    ============================================================ */
 
 const SAVE_KEY = 'omniverse-tcg-save-v1';
-const FREE_PACK_INTERVAL = 5 * 60 * 1000; // one free Universal Pack every 5 minutes
+const REGEN_INTERVAL = 5 * 60 * 1000; // +1 pack stamina / wonder chance every 5 minutes
+const STAMINA_MAX = 2;
+const WONDER_MAX = 2;
 const START_COINS = 500;
 
 let state = {
   coins: START_COINS,
-  owned: {},          // cardId -> copies owned
+  owned: {},           // cardId -> copies owned
   packsOpened: 0,
   totalPulls: 0,
-  lastFreePack: 0,    // timestamp of last free pack claim
+  stamina: STAMINA_MAX,
+  lastStaminaAt: 0,
+  wStamina: WONDER_MAX,
+  lastWStaminaAt: 0,
 };
 
 /* ---------------- persistence ---------------- */
@@ -23,7 +28,11 @@ function save() {
 function load() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
-    if (raw) state = Object.assign(state, JSON.parse(raw));
+    if (raw) {
+      const data = JSON.parse(raw);
+      delete data.lastFreePack; // pre-redesign save field
+      state = Object.assign(state, data);
+    }
   } catch (e) { /* corrupted save: start fresh */ }
 }
 
@@ -33,6 +42,7 @@ const $ = sel => document.querySelector(sel);
 const $$ = sel => Array.from(document.querySelectorAll(sel));
 
 function fmt(n) { return n.toLocaleString('en-US'); }
+function rarityRank(r) { return ['c', 'u', 'r', 'e', 'l', 'm'].indexOf(r); }
 
 function toast(msg) {
   const el = $('#toast');
@@ -43,6 +53,57 @@ function toast(msg) {
 }
 
 function uniqueOwned() { return Object.keys(state.owned).filter(id => state.owned[id] > 0).length; }
+
+/* ---------------- stamina regen ---------------- */
+
+function regenTick() {
+  const now = Date.now();
+  if (state.stamina < STAMINA_MAX) {
+    const gained = Math.floor((now - state.lastStaminaAt) / REGEN_INTERVAL);
+    if (gained > 0) {
+      state.stamina = Math.min(STAMINA_MAX, state.stamina + gained);
+      state.lastStaminaAt += gained * REGEN_INTERVAL;
+      save();
+    }
+  } else {
+    state.lastStaminaAt = now;
+  }
+  if (state.wStamina < WONDER_MAX) {
+    const gained = Math.floor((now - state.lastWStaminaAt) / REGEN_INTERVAL);
+    if (gained > 0) {
+      state.wStamina = Math.min(WONDER_MAX, state.wStamina + gained);
+      state.lastWStaminaAt += gained * REGEN_INTERVAL;
+      save();
+    }
+  } else {
+    state.lastWStaminaAt = now;
+  }
+  renderMeters();
+}
+
+function countdown(last) {
+  const remaining = Math.max(0, last + REGEN_INTERVAL - Date.now());
+  const m = Math.floor(remaining / 60000);
+  const s = Math.floor((remaining % 60000) / 1000);
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function renderMeters() {
+  $('#coin-count').textContent = fmt(state.coins);
+  const pips = Array.from({ length: STAMINA_MAX }, (_, i) =>
+    `<span class="pip ${i < state.stamina ? 'full' : ''}">📦</span>`).join('');
+  $('#stamina-pips').innerHTML = pips;
+  $('#stamina-note').textContent = state.stamina >= STAMINA_MAX
+    ? 'MAX' : `+1 in ${countdown(state.lastStaminaAt)}`;
+  const wNote = $('#wonder-note');
+  if (wNote) {
+    wNote.textContent = state.wStamina > 0
+      ? '⭐'.repeat(state.wStamina)
+      : `+1 in ${countdown(state.lastWStaminaAt)}`;
+  }
+  const openFree = $('#open-free-btn');
+  if (openFree) openFree.disabled = state.stamina < 1;
+}
 
 /* ---------------- pull logic ---------------- */
 
@@ -77,22 +138,6 @@ function pullPack(pack) {
 
 /* ---------------- economy ---------------- */
 
-function buyPack(packId, free = false) {
-  const pack = PACKS.find(p => p.id === packId);
-  if (!pack) return;
-  if (!free) {
-    if (state.coins < pack.cost) { toast('Not enough coins — sell some duplicates!'); return; }
-    state.coins -= pack.cost;
-  } else {
-    state.lastFreePack = Date.now();
-  }
-  state.packsOpened++;
-  const pulls = pullPack(pack);
-  save();
-  renderHeader();
-  startOpening(pack, pulls);
-}
-
 function sellCard(cardId, count) {
   const have = state.owned[cardId] || 0;
   count = Math.min(count, have);
@@ -102,7 +147,7 @@ function sellCard(cardId, count) {
   state.owned[cardId] = have - count;
   state.coins += value;
   save();
-  renderHeader();
+  renderMeters();
   return value;
 }
 
@@ -118,97 +163,320 @@ function sellAllDuplicates() {
   if (!sold) { toast('No duplicates to sell.'); return; }
   state.coins += total;
   save();
-  renderHeader();
+  renderMeters();
   renderCollection();
   toast(`Sold ${sold} duplicate${sold > 1 ? 's' : ''} for 🪙 ${fmt(total)}`);
 }
 
-/* ---------------- card rendering ---------------- */
+/* ---------------- TCG card rendering ---------------- */
 
 function cardHTML(card, opts = {}) {
   const rar = RARITIES[card.rar];
   const cat = CATEGORIES[card.cat];
   const copies = state.owned[card.id] || 0;
+  const move = moveFor(card);
   const holo = ['e', 'l', 'm'].includes(card.rar) ? ' holo' : '';
   const shine = ['r', 'e', 'l', 'm'].includes(card.rar) ? '<div class="shine"></div>' : '';
   const badge = opts.isNew ? '<div class="new-badge">NEW</div>' : '';
   const count = opts.showCount && copies > 1 ? `<div class="copy-count">×${copies}</div>` : '';
+  const diamonds = '◆'.repeat(rarityRank(card.rar) + 1);
   return `
-    <div class="card rar-${card.rar}${holo}" style="--hue:${cat.hue}" data-card-id="${card.id}">
+    <div class="tcg-card rar-${card.rar}${holo}${opts.small ? ' tcg-sm' : ''}" style="--hue:${cat.hue}" data-card-id="${card.id}">
       ${shine}${badge}${count}
-      <div class="card-top">
-        <span class="card-cat">${cat.icon} ${cat.name}</span>
-        <span class="card-pow">⚡${card.pow}</span>
+      <div class="tcg-inner">
+        <div class="tcg-head">
+          <span class="tcg-stage">${cat.name}</span>
+          <span class="tcg-name">${card.name}</span>
+          <span class="tcg-hp">PW<b>${card.pow}</b></span>
+          <span class="tcg-type">${cat.icon}</span>
+        </div>
+        <div class="tcg-art"><span>${card.emoji}</span></div>
+        <div class="tcg-caption">NO. ${String(card.id).padStart(3, '0')} · Omniverse Card</div>
+        <div class="tcg-attack">
+          <span class="tcg-cost">${cat.icon.repeat(move.cost)}</span>
+          <span class="tcg-move">${move.name}</span>
+          <span class="tcg-dmg">${card.pow}</span>
+        </div>
+        <div class="tcg-lore">${card.lore}</div>
+        <div class="tcg-foot">
+          <span class="tcg-pill" style="color:${rar.color}">${rar.name.toLowerCase()}</span>
+          <span class="tcg-pill">sell 🪙${rar.sell}</span>
+        </div>
+        <div class="tcg-bottom">
+          <span class="tcg-diamonds" style="color:${rar.color}">${diamonds}</span>
+          <span class="tcg-illus">Illus. Omniverse</span>
+        </div>
       </div>
-      <div class="card-art"><span>${card.emoji}</span></div>
-      <div class="card-name">${card.name}</div>
-      <div class="card-rarity" style="color:${rar.color}">${'◆'.repeat(rarityRank(card.rar) + 1)} ${rar.name}</div>
-      <div class="card-lore">${card.lore}</div>
     </div>`;
 }
 
-function rarityRank(r) { return ['c', 'u', 'r', 'e', 'l', 'm'].indexOf(r); }
-
-function cardBackHTML() {
-  return `<div class="card card-back"><div class="back-logo">🌌</div><div class="back-title">OMNIVERSE</div></div>`;
+function cardBackHTML(small = false) {
+  return `<div class="tcg-card tcg-back${small ? ' tcg-sm' : ''}">
+    <div class="back-logo">🌌</div><div class="back-title">OMNIVERSE</div>
+  </div>`;
 }
 
-/* ---------------- header ---------------- */
-
-function renderHeader() {
-  $('#coin-count').textContent = fmt(state.coins);
-  $('#stat-unique').textContent = `${uniqueOwned()}/${CARDS.length}`;
-  $('#stat-packs').textContent = fmt(state.packsOpened);
+function packVisualHTML(pack, cls = '') {
+  const [g1, g2, g3] = pack.grad;
+  return `
+    <div class="pack-visual ${cls}" style="background:linear-gradient(160deg,${g1},${g2} 55%,${g3})">
+      <div class="pack-crimp pack-crimp-top"></div>
+      <div class="pack-brand">🌌 OMNIVERSE <small>TCG</small></div>
+      <div class="pack-icon">${pack.icon}</div>
+      <div class="pack-sub">THEMED BOOSTER PACK</div>
+      <div class="pack-label">${pack.name.replace(' Pack', '').toUpperCase()}</div>
+      <div class="pack-crimp pack-crimp-bottom"></div>
+    </div>`;
 }
 
-function renderFreePackTimer() {
-  const btn = $('#free-pack-btn');
-  const remaining = state.lastFreePack + FREE_PACK_INTERVAL - Date.now();
-  if (remaining <= 0) {
-    btn.disabled = false;
-    btn.textContent = '🎁 Claim Free Pack';
+/* ---------------- screens ---------------- */
+
+function showScreen(name) {
+  $$('.screen').forEach(s => s.classList.remove('active'));
+  $(`#screen-${name}`).classList.add('active');
+  $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.nav === (name === 'packview' ? 'home' : name)));
+  if (name === 'wonder') renderWonder();
+  if (name === 'collection') renderCollection();
+}
+
+/* ---------------- home ---------------- */
+
+function renderHome() {
+  $('#pack-shelf').innerHTML = PACKS.map(p => `
+    <button class="shelf-pack" data-pack-id="${p.id}">
+      ${packVisualHTML(p)}
+    </button>`).join('');
+  $$('#pack-shelf .shelf-pack').forEach(el =>
+    el.addEventListener('click', () => openPackView(el.dataset.packId)));
+}
+
+/* ---------------- pack view ---------------- */
+
+let packIndex = 0;
+
+function openPackView(packId) {
+  packIndex = Math.max(0, PACKS.findIndex(p => p.id === packId));
+  renderPackView();
+  showScreen('packview');
+}
+
+function renderPackView() {
+  const pack = PACKS[packIndex];
+  const freeOk = pack.id !== 'stellar';
+  $('#packview-stage').innerHTML = `
+    <div class="packview-carousel">
+      ${packVisualHTML(PACKS[(packIndex + PACKS.length - 1) % PACKS.length], 'side')}
+      ${packVisualHTML(pack, 'big main')}
+      ${packVisualHTML(PACKS[(packIndex + 1) % PACKS.length], 'side')}
+    </div>
+    <div class="packview-name">${pack.name}</div>
+    <div class="packview-blurb">${pack.blurb}</div>
+    <div class="packview-actions">
+      ${freeOk ? `<button class="btn primary" id="open-free-btn" ${state.stamina < 1 ? 'disabled' : ''}>📦 Open ×1</button>` : ''}
+      <button class="btn coin ${state.coins < pack.cost ? 'cant-afford' : ''}" id="open-coin-btn">🪙 ${fmt(pack.cost)}</button>
+    </div>
+    <div class="packview-tools">
+      <button class="btn ghost" id="rates-btn">Offering Rates</button>
+      <button class="btn ghost" id="packview-back">↩ Back</button>
+    </div>`;
+  $('.packview-carousel .side:first-of-type').addEventListener('click', () => { packIndex = (packIndex + PACKS.length - 1) % PACKS.length; renderPackView(); });
+  $$('.packview-carousel .side')[1].addEventListener('click', () => { packIndex = (packIndex + 1) % PACKS.length; renderPackView(); });
+  const freeBtn = $('#open-free-btn');
+  if (freeBtn) freeBtn.addEventListener('click', () => openPack(pack, true));
+  $('#open-coin-btn').addEventListener('click', () => openPack(pack, false));
+  $('#rates-btn').addEventListener('click', () => showRates(pack));
+  $('#packview-back').addEventListener('click', () => showScreen('home'));
+}
+
+function showRates(pack) {
+  const rows = pack.odds.map((table, i) => {
+    const cells = Object.entries(table)
+      .map(([r, w]) => `<span style="color:${RARITIES[r].color}">${RARITIES[r].name} ${w}%</span>`)
+      .join(' · ');
+    return `<div class="rate-row"><b>Card ${i + 1}</b><span>${cells}</span></div>`;
+  }).join('');
+  $('#rates-body').innerHTML = `<h3>${pack.name} — Offering Rates</h3>${rows}
+    <div class="rate-note">Every pack contains 5 cards. Rarer cards sell for more coins.</div>`;
+  $('#rates-modal').classList.add('show');
+}
+
+/* ---------------- pack opening ceremony ---------------- */
+
+let opening = null; // { pack, pulls, newSet, idx }
+
+function openPack(pack, useStamina) {
+  if (useStamina) {
+    regenTick();
+    if (state.stamina < 1) { toast('No pack stamina — wait for it to recharge!'); return; }
+    if (state.stamina >= STAMINA_MAX) state.lastStaminaAt = Date.now();
+    state.stamina--;
   } else {
-    btn.disabled = true;
-    const m = Math.floor(remaining / 60000);
-    const s = Math.floor((remaining % 60000) / 1000);
-    btn.textContent = `🎁 Free pack in ${m}:${String(s).padStart(2, '0')}`;
+    if (state.coins < pack.cost) { toast('Not enough coins — sell some duplicates!'); return; }
+    state.coins -= pack.cost;
+  }
+  state.packsOpened++;
+  const pulls = pullPack(pack);
+  const newSet = new Set(pulls.filter(c => !(state.owned[c.id] > 0)).map(c => c.id));
+  for (const c of pulls) {
+    state.owned[c.id] = (state.owned[c.id] || 0) + 1;
+    state.totalPulls++;
+  }
+  save();
+  renderMeters();
+  opening = { pack, pulls, newSet, idx: 0 };
+  $('#opening-overlay').classList.add('show');
+  $('#opening-stage').innerHTML = `
+    <div class="rip-pack" id="rip-pack">
+      ${packVisualHTML(pack, 'big')}
+      <div class="rip-hint">Tap to rip open!</div>
+    </div>`;
+  $('#rip-pack').addEventListener('click', () => {
+    $('#rip-pack').classList.add('ripping');
+    setTimeout(showNextCard, 550);
+  }, { once: true });
+}
+
+function showNextCard() {
+  const { pulls, newSet, idx } = opening;
+  if (idx >= pulls.length) { showResults(); return; }
+  const card = pulls[idx];
+  opening.idx++;
+  $('#opening-stage').innerHTML = `
+    <div class="single-reveal" id="single-reveal">
+      <div class="reveal-flip">
+        <div class="flip-inner">
+          <div class="flip-front">${cardBackHTML()}</div>
+          <div class="flip-back">${cardHTML(card, { isNew: newSet.has(card.id) && pulls.findIndex(c => c.id === card.id) === idx })}</div>
+        </div>
+      </div>
+      <div class="reveal-count">${opening.idx} / ${pulls.length} · tap to continue</div>
+    </div>
+    <button class="skip-btn" id="skip-btn" title="Skip to results">⏭</button>`;
+  requestAnimationFrame(() => requestAnimationFrame(() =>
+    $('.reveal-flip')?.classList.add('flipped')));
+  if (rarityRank(card.rar) >= 3) setTimeout(() =>
+    burstConfetti($('.reveal-flip'), RARITIES[card.rar].color), 500);
+  $('#single-reveal').addEventListener('click', showNextCard, { once: true });
+  $('#skip-btn').addEventListener('click', e => { e.stopPropagation(); showResults(); });
+}
+
+function showResults() {
+  const { pulls, newSet } = opening;
+  const seen = new Set();
+  $('#opening-stage').innerHTML = `
+    <div class="results">
+      <h2 class="results-title">Opening Results</h2>
+      <div class="results-rule"></div>
+      <div class="results-grid">
+        ${pulls.map(c => {
+          const isNew = newSet.has(c.id) && !seen.has(c.id);
+          seen.add(c.id);
+          return `<div class="result-slot">${cardHTML(c, { isNew, small: true, showCount: true })}</div>`;
+        }).join('')}
+      </div>
+      <button class="btn primary big-pill" id="results-next">Next</button>
+    </div>`;
+  $('#results-next').addEventListener('click', finishOpening);
+}
+
+function finishOpening() {
+  const { pulls, newSet } = opening;
+  const best = pulls.reduce((a, b) => rarityRank(b.rar) > rarityRank(a.rar) ? b : a);
+  $('#opening-overlay').classList.remove('show');
+  opening = null;
+  renderMeters();
+  renderPackView();
+  toast(newSet.size
+    ? `${newSet.size} new card${newSet.size > 1 ? 's' : ''}! Best pull: ${best.emoji} ${best.name}`
+    : `All duplicates — sell them for coins! Best: ${best.emoji} ${best.name}`);
+}
+
+/* tiny confetti burst for epic+ pulls */
+function burstConfetti(anchor, color) {
+  if (!anchor) return;
+  const rect = anchor.getBoundingClientRect();
+  for (let i = 0; i < 24; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti';
+    p.style.background = i % 3 ? color : '#fff';
+    p.style.left = rect.left + rect.width / 2 + 'px';
+    p.style.top = rect.top + rect.height / 2 + 'px';
+    const ang = Math.random() * Math.PI * 2, dist = 60 + Math.random() * 140;
+    p.style.setProperty('--dx', Math.cos(ang) * dist + 'px');
+    p.style.setProperty('--dy', Math.sin(ang) * dist - 60 + 'px');
+    p.style.setProperty('--rot', Math.random() * 720 - 360 + 'deg');
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 1100);
   }
 }
 
-/* ---------------- shop ---------------- */
+/* ---------------- wonder pick ---------------- */
 
-function renderShop() {
-  $('#pack-grid').innerHTML = PACKS.map(p => {
-    const [g1, g2, g3] = p.grad;
-    const catIcons = (p.cats || Object.keys(CATEGORIES)).map(c => CATEGORIES[c].icon).join(' ');
-    const afford = state.coins >= p.cost;
-    return `
-      <div class="pack" data-pack-id="${p.id}">
-        <div class="pack-visual" style="background:linear-gradient(160deg,${g1},${g2} 55%,${g3})">
-          <div class="pack-crimp pack-crimp-top"></div>
-          <div class="pack-icon">${p.icon}</div>
-          <div class="pack-label">${p.name.replace(' Pack', '').toUpperCase()}</div>
-          <div class="pack-crimp pack-crimp-bottom"></div>
-        </div>
-        <div class="pack-info">
-          <div class="pack-name">${p.name}</div>
-          <div class="pack-blurb">${p.blurb}</div>
-          <div class="pack-cats">${catIcons}</div>
-          <button class="btn buy-btn ${afford ? '' : 'cant-afford'}" data-pack-id="${p.id}">🪙 ${fmt(p.cost)}</button>
-        </div>
+let wonderOffer = null;   // 5 cards on offer
+let wonderPicked = false;
+
+function newWonderOffer() {
+  wonderOffer = pullPack(PACKS[0]); // universal odds
+  wonderPicked = false;
+}
+
+function renderWonder() {
+  if (!wonderOffer || wonderPicked) newWonderOffer();
+  const stage = $('#wonder-stage');
+  stage.innerHTML = `
+    <p class="wonder-blurb">Someone opened these 5 cards. Spend ⭐ 1 wonder chance,
+    the cards flip face-down and shuffle — pick one to keep!</p>
+    <div class="wonder-row">
+      ${wonderOffer.map(c => `<div class="wonder-slot">${cardHTML(c, { small: true })}</div>`).join('')}
+    </div>
+    <div class="wonder-actions">
+      <button class="btn primary" id="wonder-go" ${state.wStamina < 1 ? 'disabled' : ''}>✨ Wonder Pick (⭐1)</button>
+      <button class="btn ghost" id="wonder-refresh">🔄 New offering</button>
+    </div>`;
+  $('#wonder-go').addEventListener('click', startWonderPick);
+  $('#wonder-refresh').addEventListener('click', () => { newWonderOffer(); renderWonder(); });
+}
+
+function startWonderPick() {
+  regenTick();
+  if (state.wStamina < 1) { toast('No wonder chances left — wait for the recharge!'); return; }
+  if (state.wStamina >= WONDER_MAX) state.lastWStaminaAt = Date.now();
+  state.wStamina--;
+  save();
+  renderMeters();
+  const shuffled = [...wonderOffer].sort(() => Math.random() - 0.5);
+  const stage = $('#wonder-stage');
+  stage.innerHTML = `
+    <p class="wonder-blurb">Pick a card!</p>
+    <div class="wonder-row">
+      ${shuffled.map((c, i) => `
+        <div class="wonder-slot facedown" data-i="${i}">${cardBackHTML(true)}</div>`).join('')}
+    </div>`;
+  $$('.wonder-slot.facedown').forEach(el => el.addEventListener('click', () => {
+    const picked = shuffled[+el.dataset.i];
+    const isNew = !(state.owned[picked.id] > 0);
+    state.owned[picked.id] = (state.owned[picked.id] || 0) + 1;
+    state.totalPulls++;
+    wonderPicked = true;
+    save();
+    renderMeters();
+    stage.innerHTML = `
+      <p class="wonder-blurb">${isNew ? 'A brand new card!' : 'A duplicate — worth 🪙' + RARITIES[picked.rar].sell}</p>
+      <div class="wonder-won">${cardHTML(picked, { isNew })}</div>
+      <div class="wonder-actions">
+        <button class="btn primary" id="wonder-again">Nice! Continue</button>
       </div>`;
-  }).join('');
-
-  $$('#pack-grid .buy-btn').forEach(btn =>
-    btn.addEventListener('click', () => buyPack(btn.dataset.packId)));
+    if (rarityRank(picked.rar) >= 3) burstConfetti($('.wonder-won'), RARITIES[picked.rar].color);
+    $('#wonder-again').addEventListener('click', renderWonder);
+  }, { once: true }));
 }
 
 /* ---------------- collection ---------------- */
 
-let collectionFilter = { cat: 'all', rar: 'all', ownedOnly: false };
+let collectionFilter = { cat: 'all', rar: 'all' };
 
 function renderCollection() {
-  // filter chips
+  $('#collection-stats').textContent = `${uniqueOwned()} / ${CARDS.length} collected · ${fmt(state.packsOpened)} packs opened`;
   $('#cat-filters').innerHTML =
     `<button class="chip ${collectionFilter.cat === 'all' ? 'active' : ''}" data-cat="all">All</button>` +
     Object.entries(CATEGORIES).map(([key, c]) =>
@@ -233,9 +501,9 @@ function renderCollection() {
   $('#collection-grid').innerHTML = cards.map(c => {
     const copies = state.owned[c.id] || 0;
     if (!copies) {
-      return `<div class="card-slot locked"><div class="locked-emoji">?</div><div class="locked-name">${'—'}</div></div>`;
+      return `<div class="card-slot locked"><div class="locked-emoji">?</div></div>`;
     }
-    return `<div class="card-slot">${cardHTML(c, { showCount: true })}
+    return `<div class="card-slot">${cardHTML(c, { showCount: true, small: true })}
       ${copies > 1 ? `<button class="btn sell-one" data-card-id="${c.id}">Sell 1 · 🪙${RARITIES[c.rar].sell}</button>` : ''}
     </div>`;
   }).join('');
@@ -258,132 +526,25 @@ function renderCollection() {
     : '💰 No duplicates to sell';
 }
 
-/* ---------------- pack opening ceremony ---------------- */
-
-let opening = null; // { pack, pulls, revealed }
-
-function startOpening(pack, pulls) {
-  opening = { pack, pulls, revealed: 0, newIds: [] };
-  const [g1, g2, g3] = pack.grad;
-  $('#opening-overlay').classList.add('show');
-  $('#opening-stage').innerHTML = `
-    <div class="rip-pack" id="rip-pack">
-      <div class="pack-visual big" style="background:linear-gradient(160deg,${g1},${g2} 55%,${g3})">
-        <div class="pack-crimp pack-crimp-top"></div>
-        <div class="pack-icon">${pack.icon}</div>
-        <div class="pack-label">${pack.name.replace(' Pack', '').toUpperCase()}</div>
-        <div class="pack-crimp pack-crimp-bottom"></div>
-      </div>
-      <div class="rip-hint">Tap to rip open!</div>
-    </div>`;
-  $('#rip-pack').addEventListener('click', ripOpen, { once: true });
-}
-
-function ripOpen() {
-  const packEl = $('#rip-pack');
-  packEl.classList.add('ripping');
-  setTimeout(showReveals, 550);
-}
-
-function showReveals() {
-  const { pulls } = opening;
-  // Cards not owned before this pack get the NEW badge (recorded before adding copies).
-  const newSet = new Set(pulls.filter(c => !(state.owned[c.id] > 0)).map(c => c.id));
-  opening.newSet = newSet;
-  for (const c of pulls) {
-    state.owned[c.id] = (state.owned[c.id] || 0) + 1;
-    state.totalPulls++;
-  }
-  save();
-
-  $('#opening-stage').innerHTML = `
-    <div class="reveal-row">
-      ${pulls.map((c, i) => `
-        <div class="flip-card" data-i="${i}" style="animation-delay:${i * 90}ms">
-          <div class="flip-inner">
-            <div class="flip-front">${cardBackHTML()}</div>
-            <div class="flip-back">${cardHTML(c, { isNew: opening.newSet.has(c.id) && pulls.indexOf(c) === i })}</div>
-          </div>
-        </div>`).join('')}
-    </div>
-    <div class="reveal-hint">Tap each card to reveal</div>
-    <div class="reveal-actions hidden" id="reveal-actions">
-      <button class="btn primary" id="reveal-done">Collect All ✨</button>
-    </div>`;
-
-  $$('.flip-card').forEach(el => el.addEventListener('click', () => {
-    if (el.classList.contains('flipped')) return;
-    el.classList.add('flipped');
-    const card = pulls[+el.dataset.i];
-    if (rarityRank(card.rar) >= 3) burstConfetti(el, RARITIES[card.rar].color);
-    opening.revealed++;
-    if (opening.revealed === pulls.length) {
-      $('#reveal-actions').classList.remove('hidden');
-      $('.reveal-hint')?.classList.add('hidden');
-    }
-  }, { once: true }));
-
-  $('#reveal-done').addEventListener('click', finishOpening);
-}
-
-function finishOpening() {
-  const { pulls, newSet } = opening;
-  const best = pulls.reduce((a, b) => rarityRank(b.rar) > rarityRank(a.rar) ? b : a);
-  const newCount = newSet.size;
-  $('#opening-overlay').classList.remove('show');
-  opening = null;
-  renderHeader();
-  renderCollection();
-  renderShop();
-  toast(newCount
-    ? `${newCount} new card${newCount > 1 ? 's' : ''}! Best pull: ${best.emoji} ${best.name}`
-    : `All duplicates — sell them for coins! Best: ${best.emoji} ${best.name}`);
-}
-
-/* tiny confetti burst for epic+ pulls */
-function burstConfetti(anchor, color) {
-  const rect = anchor.getBoundingClientRect();
-  for (let i = 0; i < 24; i++) {
-    const p = document.createElement('div');
-    p.className = 'confetti';
-    p.style.background = i % 3 ? color : '#fff';
-    p.style.left = rect.left + rect.width / 2 + 'px';
-    p.style.top = rect.top + rect.height / 2 + 'px';
-    const ang = Math.random() * Math.PI * 2, dist = 60 + Math.random() * 140;
-    p.style.setProperty('--dx', Math.cos(ang) * dist + 'px');
-    p.style.setProperty('--dy', Math.sin(ang) * dist - 60 + 'px');
-    p.style.setProperty('--rot', Math.random() * 720 - 360 + 'deg');
-    document.body.appendChild(p);
-    setTimeout(() => p.remove(), 1100);
-  }
-}
-
-/* ---------------- tabs ---------------- */
-
-function showTab(tab) {
-  $$('.view').forEach(v => v.classList.remove('active'));
-  $$('.tab-btn').forEach(b => b.classList.remove('active'));
-  $(`#view-${tab}`).classList.add('active');
-  $(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
-}
-
 /* ---------------- boot ---------------- */
 
 function init() {
   load();
-  renderHeader();
-  renderShop();
+  if (!state.lastStaminaAt) state.lastStaminaAt = Date.now();
+  if (!state.lastWStaminaAt) state.lastWStaminaAt = Date.now();
+  renderHome();
+  renderMeters();
   renderCollection();
-  renderFreePackTimer();
-  setInterval(renderFreePackTimer, 1000);
+  regenTick();
+  setInterval(regenTick, 1000);
 
-  $$('.tab-btn').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
-  $('#free-pack-btn').addEventListener('click', () => {
-    if (state.lastFreePack + FREE_PACK_INTERVAL - Date.now() > 0) return;
-    buyPack('universal', true);
-    renderFreePackTimer();
+  $$('.nav-btn').forEach(b => b.addEventListener('click', () => showScreen(b.dataset.nav)));
+  $('#home-wonder-card').addEventListener('click', () => showScreen('wonder'));
+  $('#home-collection-card').addEventListener('click', () => showScreen('collection'));
+  $('#rates-close').addEventListener('click', () => $('#rates-modal').classList.remove('show'));
+  $('#rates-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('show');
   });
-  $('#sell-dupes-btn').addEventListener('click', sellAllDuplicates);
   $('#reset-btn').addEventListener('click', () => {
     if (confirm('Reset ALL progress? Your collection and coins will be lost.')) {
       localStorage.removeItem(SAVE_KEY);
