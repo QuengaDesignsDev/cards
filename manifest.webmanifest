@@ -1,0 +1,19 @@
+{
+  "name": "Omniverse TCG",
+  "short_name": "Omniverse",
+  "description": "A pack-opening trading card game where the cards are anything in the universe — animals, machines, landmarks, nations, mythic beings, planets, ocean life, and dinosaurs.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b0e1a",
+  "theme_color": "#0d1122",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

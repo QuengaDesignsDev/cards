@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Omniverse TCG — Collect Anything in the Universe</title>
+  <meta name="description" content="A pack-opening trading card game where the cards are anything in the universe.">
+  <meta name="theme-color" content="#0d1122">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Omniverse">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="logo">🌌 <span>OMNIVERSE</span> <small>TCG</small></div>
+    <button class="btn install-btn" id="install-btn" hidden>⬇️ Install</button>
+    <div class="stats">
+      <div class="stat coins" title="Coins">🪙 <span id="coin-count">0</span></div>
+      <div class="stat" title="Unique cards collected">🃏 <span id="stat-unique">0/0</span></div>
+      <div class="stat" title="Packs opened">📦 <span id="stat-packs">0</span></div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="shop">🛒 Pack Shop</button>
+    <button class="tab-btn" data-tab="collection">🗂️ Collection</button>
+  </nav>
+
+  <main>
+    <!-- SHOP -->
+    <section id="view-shop" class="view active">
+      <div class="free-pack-row">
+        <button class="btn primary" id="free-pack-btn">🎁 Claim Free Pack</button>
+      </div>
+      <div id="pack-grid" class="pack-grid"></div>
+    </section>
+
+    <!-- COLLECTION -->
+    <section id="view-collection" class="view">
+      <div class="collection-tools">
+        <div id="cat-filters" class="filter-row"></div>
+        <div id="rar-filters" class="filter-row"></div>
+        <button class="btn" id="sell-dupes-btn">💰 Sell all duplicates</button>
+      </div>
+      <div id="collection-grid" class="collection-grid"></div>
+      <div class="danger-zone">
+        <button class="btn danger" id="reset-btn">Reset all progress</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- PACK OPENING OVERLAY -->
+  <div id="opening-overlay" class="overlay">
+    <div id="opening-stage" class="opening-stage"></div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="js/cards.js"></script>
+  <script src="js/game.js"></script>
+  <script>
+    if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
+    }
+  </script>
+</body>
+</html>
