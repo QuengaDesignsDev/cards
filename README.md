@@ -32,10 +32,22 @@ Or host the folder on any static host (GitHub Pages, Netlify, Vercel).
 - **Sell cards** — duplicates can be sold for coins (one at a time in the Collection, or all
   at once with *Sell all duplicates*). Rarer cards sell for much more.
 - **Buy more packs** — spend coins in the Pack Shop.
-- **Collect** — 177 unique cards across 11 categories (from wild animals and nations to
-  sports legends, screen tropes, and a genuinely excellent pet rock). Filter the Collection
-  by category and rarity; unowned cards show as locked silhouettes, and tapping an owned
-  card shows it full-size.
+- **Collect** — 209 unique cards across 13 categories (wild animals, nations, sports
+  legends, screen tropes, original TCG battle creatures, video-game archetypes, and a
+  genuinely excellent pet rock). Filter by category and rarity; tap any card for its page.
+- **Quality** — every copy you pull has its own condition (Mint / Near Mint / Lightly
+  Played / Moderately Played / Damaged), rolled from hidden centering/corners/edges/surface
+  subscores. Condition changes what a copy is worth.
+- **Per-card prices** — each card has its own market value based on rarity and power.
+  Singles can be bought individually at market × 1.5, and every copy sells at its own
+  condition- and grade-adjusted price.
+- **OmniGrade grading** — send any copy to be graded (Standard $4.99, ready in 5 min, or
+  Express $14.99, ready in 60 s). Cards come back slabbed with a 1–10 grade from a
+  1000-point report (centering, corners, edges, surface). High grades multiply value —
+  a 10 is worth 6× market. Track submissions and browse your graded collection in the
+  Grade tab.
+- **3D cards** — open any card and drag to spin it in 3D (front and back, tilt-reactive
+  glare); double-tap to reset.
 - **Progress saves automatically** in your browser (localStorage).
 
 ## 📦 Packs

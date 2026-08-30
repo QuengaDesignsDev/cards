@@ -63,6 +63,12 @@
         <div id="wonder-stage"></div>
       </section>
 
+      <!-- OMNIGRADE -->
+      <section id="screen-grade" class="screen">
+        <h2 class="screen-title">🏅 OmniGrade</h2>
+        <div id="grade-stage"></div>
+      </section>
+
       <!-- COLLECTION -->
       <section id="screen-collection" class="screen">
         <h2 class="screen-title">🗂️ Collection</h2>
@@ -82,6 +88,7 @@
     <nav class="bottom-nav">
       <button class="nav-btn active" data-nav="home">🏠<span>Home</span></button>
       <button class="nav-btn" data-nav="wonder">✨<span>Wonder</span></button>
+      <button class="nav-btn" data-nav="grade">🏅<span>Grade</span><i class="nav-dot" id="grade-dot" hidden></i></button>
       <button class="nav-btn" data-nav="collection">🗂️<span>Cards</span></button>
     </nav>
 
@@ -100,10 +107,14 @@
     </div>
   </div>
 
-  <!-- FULL-SIZE CARD VIEWER -->
+  <!-- 3D CARD VIEWER -->
   <div id="viewer-modal" class="overlay viewer">
-    <div id="viewer-body"></div>
-    <div class="viewer-hint">Tap anywhere to close</div>
+    <div class="viewer-stage" id="viewer-stage">
+      <div class="viewer-3d" id="viewer-3d"></div>
+    </div>
+    <div class="viewer-hint">Drag to spin · double-tap to reset</div>
+    <div id="viewer-copies" class="viewer-copies"></div>
+    <button class="btn" id="viewer-close">✕ Close</button>
   </div>
 
   <div id="toast" class="toast"></div>
