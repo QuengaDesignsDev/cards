@@ -178,6 +178,23 @@ const CARDS = [
 
 const CARDS_BY_ID = Object.fromEntries(CARDS.map(c => [c.id, c]));
 
+/* Signature move names per category, indexed by rarity tier (c/u, r/e, l/m). */
+const MOVES = {
+  animals:   ['Wild Swipe', 'Apex Pounce', "King's Judgment"],
+  machines:  ['Turbo Dash', 'Sonic Overdrive', 'Orbital Strike'],
+  landmarks: ['Stone Stand', 'Monument Crush', 'Wonder of Ages'],
+  nations:   ['Rally Cry', 'Border Surge', 'Age of Glory'],
+  myth:      ['Hex Bolt', 'Arcane Burst', 'Divine Wrath'],
+  cosmos:    ['Star Spark', 'Nova Flare', 'Event Horizon'],
+  ocean:     ['Bubble Jet', 'Abyssal Grip', "Kraken's Embrace"],
+  dino:      ['Fossil Bite', 'Primal Crunch', 'Extinction Stomp'],
+};
+
+function moveFor(card) {
+  const tier = { c: 0, u: 0, r: 1, e: 1, l: 2, m: 2 }[card.rar];
+  return { name: MOVES[card.cat][tier], cost: tier + 1 };
+}
+
 /* Pack definitions. cats: null = all categories. odds: per-slot rarity tables. */
 const STANDARD_ODDS = [
   { c: 70, u: 25, r: 5 },
